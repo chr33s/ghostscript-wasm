@@ -10,6 +10,7 @@ before(async function () {
 describe("all", function () {
   it("should render eps to png", async function () {
     const exitStatus = await callMain([
+      "-q",
       "-dSAFER",
       "-dBATCH",
       "-dNOPAUSE",

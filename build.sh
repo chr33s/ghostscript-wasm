@@ -20,11 +20,6 @@ export CXXFLAGS="$CFLAGS"
 
 mkdir -p "$OUT_DIR"
 
-cd "$ROOT/lib/zlib"
-fn_git_clean
-emconfigure ./configure --prefix="$OUT_DIR" --static
-emmake make -j install
-
 cd "$ROOT/lib/ghostscript"
 fn_git_clean
 emconfigure ./autogen.sh \
@@ -35,23 +30,28 @@ emconfigure ./autogen.sh \
   --disable-cups \
   --disable-dbus \
   --disable-gtk \
+  --with-drivers=FILES \
   --with-arch_h="$ROOT/arch_wasm.h"
 # TODO: remove `EMULATE_FUNCTION_POINTER_CASTS`: https://github.com/emscripten-core/emscripten/issues/16126
+
 export GS_LDFLAGS="\
--lnodefs.js -lworkerfs.js \
---pre-js "$ROOT/js/pre.js" \
---post-js "$ROOT/js/post.js" \
---closure 1 \
--s EMULATE_FUNCTION_POINTER_CASTS=1 \
--s BINARYEN_EXTRA_PASSES=\"--pass-arg=max-func-params@39\" \
--s WASM_BIGINT=1 \
--s INITIAL_MEMORY=67108864 \
--s ALLOW_MEMORY_GROWTH=1 \
--s EXPORTED_RUNTIME_METHODS='[\"callMain\",\"FS\",\"NODEFS\",\"WORKERFS\",\"ENV\"]' \
--s INCOMING_MODULE_JS_API='[\"noInitialRun\",\"noFSInit\",\"locateFile\",\"preRun\",\"instantiateWasm\"]' \
--s NO_DISABLE_EXCEPTION_CATCHING=1 \
--s MODULARIZE=1 \
+  -lnodefs.js -lworkerfs.js \
+  --pre-js "$ROOT/js/pre.js" \
+  --post-js "$ROOT/js/post.js" \
+  --closure 1 \
+  -s USE_ZLIB=1 \
+  -s EMULATE_FUNCTION_POINTER_CASTS=1 \
+  -s BINARYEN_EXTRA_PASSES=\"--pass-arg=max-func-params@39\" \
+  -s WASM_BIGINT=1 \
+  -s INITIAL_MEMORY=67108864 \
+  -s ALLOW_MEMORY_GROWTH=1 \
+  -s EXPORTED_RUNTIME_METHODS='[\"callMain\",\"FS\",\"NODEFS\",\"WORKERFS\",\"ENV\"]' \
+  -s INCOMING_MODULE_JS_API='[\"noInitialRun\",\"noFSInit\",\"locateFile\",\"preRun\",\"instantiateWasm\"]' \
+  -s NO_DISABLE_EXCEPTION_CATCHING=1 \
+  -s MODULARIZE=1 \
+  -s EXIT_RUNTIME=1 \
 "
+
 emmake make \
   XE=".js" \
   LDFLAGS="$LDFLAGS $GS_LDFLAGS" \
@@ -60,10 +60,3 @@ emmake make \
 mkdir -p "$ROOT/dist"
 cd "$ROOT/dist"
 cp $ROOT/lib/ghostscript/bin/gs.* .
-wasm-opt gs.wasm -Oz -o gs.opt.wasm
-mv gs.opt.wasm gs.wasm
-
-# The closure flag doesn't work for some reason, so we need to remove the
-# INCOMING_MODULE_JS_API-checks manually.
-echo "reminder: remove INCOMING_MODULE_JS_API-checks"
-exit 1
