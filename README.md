@@ -3,7 +3,7 @@
 `ghostscript` compiled to WASM via Emscripten.
 
 ```sh
-npm install --save @jspawn/ghostscript-wasm
+npm install --save @chr33s/ghostscript-wasm
 ```
 
 ## Building
