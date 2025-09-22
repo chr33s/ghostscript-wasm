@@ -1,14 +1,15 @@
-const assert = require("assert");
+const test = require("node:test");
+const assert = require("node:assert");
 const path = require("path");
 const fs = require("fs/promises");
 const Module = require("../dist/gs");
 
-before(async function () {
+// Group related tests using a top-level test with subtests
+test("ghostscript-wasm: all", async (t) => {
+  // setup
   await fs.mkdir(path.join(__dirname, "out"), { recursive: true });
-});
 
-describe("all", function () {
-  it("should render eps to png", async function () {
+  await t.test("should render eps to png", async () => {
     const exitStatus = await callMain([
       "-q",
       "-dSAFER",
@@ -23,9 +24,12 @@ describe("all", function () {
   });
 
   // Ensure this doesn't call `process.exit`
-  it("should exit properly on error", async function () {
+  await t.test("should exit properly on error", async () => {
+    const prevExitCode = process.exitCode;
     const exitStatus = await callMain(["unknown-subcommand"]);
     assert.equal(exitStatus, 1);
+    // Some Emscripten builds set process.exitCode; restore it so the harness doesn't fail.
+    process.exitCode = prevExitCode ?? 0;
   });
 });
 

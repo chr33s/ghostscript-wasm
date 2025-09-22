@@ -12,7 +12,7 @@ npm install --save @jspawn/ghostscript-wasm
 
 - Docker (recommended) or
 - Emscripten SDK 3.1.60+
-- Node.js 16+ for testing
+- Node.js 18+ for testing (uses built-in node:test)
 
 ### Using Docker (Recommended)
 
